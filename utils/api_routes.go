@@ -16,7 +16,7 @@ var events = []Event{
 
 func (e Event) AddEvent() {
 	events = append(events, Event{
-		EventName: "A Go-lang life", EventOwner: "Shubham",
+		EventName: "A Go-lang life of a developer", EventOwner: "Shubham",
 	},
 	)
 }
