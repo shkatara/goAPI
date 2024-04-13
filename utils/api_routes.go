@@ -8,7 +8,7 @@ import (
 
 type Event struct {
 	EventName  string `json:"event_name" binding:"required"`
-	EventOwner string `json:"event_name" binding:"required"`
+	EventOwner string `json:"event_owner" binding:"required"`
 }
 
 var events = []Event{
@@ -29,9 +29,9 @@ func SaveEvent(c *gin.Context) {
 		fmt.Println("Error in binding JSON: ", err)
 	}
 	fmt.Println("Event Name: ", jsonData)
-	//events = append(events, Event{
-	//	EventName: "A Go-lang life of a developer", EventOwner: "Shubham",
-	//})
+	events = append(events, Event{
+		EventName: jsonData.EventName, EventOwner: jsonData.EventOwner,
+	})
 
 }
 
