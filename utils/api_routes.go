@@ -1,12 +1,14 @@
 package utils
 
 import (
+	"fmt"
+
 	"github.com/gin-gonic/gin"
 )
 
 type Event struct {
-	EventName  string `json:"event_name"`
-	EventOwner string `json:"event_date"`
+	EventName  string `json:"event_name" binding:"required"`
+	EventOwner string `json:"event_name" binding:"required"`
 }
 
 var events = []Event{
@@ -14,17 +16,23 @@ var events = []Event{
 	{EventName: "There goes another", EventOwner: "Shubham"},
 }
 
-func (e Event) AddEvent() {
-	events = append(events, Event{
-		EventName: "A Go-lang life of a developer", EventOwner: "Shubham",
-	},
-	)
-}
-
 func GetAllEvents(c *gin.Context) {
 	c.JSON(200, gin.H{
 		"events": events,
 	})
+}
+
+func SaveEvent(c *gin.Context) {
+	var jsonData Event
+	err := c.ShouldBindJSON(&jsonData)
+	if err != nil {
+		fmt.Println("Error in binding JSON: ", err)
+	}
+	fmt.Println("Event Name: ", jsonData)
+	//events = append(events, Event{
+	//	EventName: "A Go-lang life of a developer", EventOwner: "Shubham",
+	//})
+
 }
 
 func GetRoot(c *gin.Context) {
