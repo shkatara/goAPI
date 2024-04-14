@@ -1,7 +1,6 @@
 package utils
 
 import (
-	"fmt"
 	"math/rand"
 	"net/http"
 
@@ -51,7 +50,7 @@ func FetchEvent(c *gin.Context) {
 	var jsonData Event
 	err := c.ShouldBindJSON(&jsonData)
 	CheckError(err)
-	event := CheckForEvent(jsonData)
+	_, event := CheckForEvent(jsonData)
 	if event.EventID != 0 {
 		c.JSON(200, gin.H{
 			"Event Name":  event.EventName,
@@ -66,24 +65,16 @@ func FetchEvent(c *gin.Context) {
 
 func DeleteEvent(c *gin.Context) {
 	var jsonData Event
-	eventDeleted := false
 	err := c.ShouldBindJSON(&jsonData)
 	CheckError(err)
-	for i, event := range events {
-		if event.EventID == jsonData.EventID {
-			fmt.Println(event.EventName, "available at index", i)
-			events = DeleteElementFromEventSlice(events, i)
-			c.JSON(200, gin.H{
-				"message": "Event deleted",
-			})
-			eventDeleted = true
-			return
-		}
-	}
-	if !eventDeleted {
-		c.JSON(404, gin.H{
-			"message": "Event not found",
-		})
+	index, _ := CheckForEvent(jsonData)
+	if index < 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "Event not found"})
+	} else {
+		events = DeleteElementFromEventSlice(events, index)
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Event Deleted"})
 	}
 }
 

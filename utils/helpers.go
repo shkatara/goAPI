@@ -14,11 +14,11 @@ func DeleteElementFromEventSlice(slice []Event, index int) []Event {
 	return append(slice[:index], slice[index+1:]...)
 }
 
-func CheckForEvent(e Event) Event {
-	for _, event := range events {
+func CheckForEvent(e Event) (int, Event) {
+	for i, event := range events {
 		if event.EventID == e.EventID {
-			return event
+			return i, event
 		}
 	}
-	return Event{}
+	return -1, Event{}
 }
