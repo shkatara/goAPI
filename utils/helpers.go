@@ -1,6 +1,8 @@
 package utils
 
-import "fmt"
+import (
+	"fmt"
+)
 
 func CheckError(e error) {
 	if e != nil {
@@ -10,4 +12,13 @@ func CheckError(e error) {
 
 func DeleteElementFromEventSlice(slice []Event, index int) []Event {
 	return append(slice[:index], slice[index+1:]...)
+}
+
+func CheckForEvent(e Event) Event {
+	for _, event := range events {
+		if event.EventID == e.EventID {
+			return event
+		}
+	}
+	return Event{}
 }

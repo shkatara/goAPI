@@ -51,20 +51,17 @@ func FetchEvent(c *gin.Context) {
 	var jsonData Event
 	err := c.ShouldBindJSON(&jsonData)
 	CheckError(err)
-	for _, event := range events {
-		if event.EventID == jsonData.EventID {
-			c.JSON(http.StatusOK, gin.H{
-				"event_name":  event.EventName,
-				"event_owner": event.EventOwner,
-			})
-			return // This is important to stop the loop if one hit is found.
-			// Need to stop the loop if the event is found as event_id is unique
-			// Otherwise, it will keep on searching.
-		}
+	event := CheckForEvent(jsonData)
+	if event.EventID != 0 {
+		c.JSON(200, gin.H{
+			"Event Name":  event.EventName,
+			"Event Owner": event.EventOwner,
+		})
+	} else {
+		c.JSON(404, gin.H{
+			"message": "Event not found"},
+		)
 	}
-	c.JSON(http.StatusNotFound, gin.H{
-		"message": "Event not found",
-	})
 }
 
 func DeleteEvent(c *gin.Context) {
