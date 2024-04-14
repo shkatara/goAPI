@@ -79,18 +79,25 @@ func deleteElementFromEventSlice(slice []Event, index int) []Event {
 
 func DeleteEvent(c *gin.Context) {
 	var jsonData Event
+	eventDeleted := false
 	err := c.ShouldBindJSON(&jsonData)
 	checkError(err)
 	for i, event := range events {
 		if event.EventID == jsonData.EventID {
-			fmt.Println("Event is", event.EventName, "available at index", i)
-			events = deleteElementFromEventSlice(events, event.EventID)
+			fmt.Println(event.EventName, "available at index", i)
+			events = deleteElementFromEventSlice(events, i)
 			c.JSON(200, gin.H{
 				"message": "Event deleted",
 			})
+			eventDeleted = true
+			return
 		}
 	}
-
+	if !eventDeleted {
+		c.JSON(404, gin.H{
+			"message": "Event not found",
+		})
+	}
 }
 
 func GetRoot(c *gin.Context) {
