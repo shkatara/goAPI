@@ -8,12 +8,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func checkError(e error) {
-	if e != nil {
-		fmt.Println("Error: ", e)
-	}
-}
-
 type Event struct {
 	EventName  string `json:"event_name" binding:"required"`
 	EventOwner string `json:"event_owner" binding:"required"`
@@ -42,7 +36,7 @@ func AddEvent(c *gin.Context) {
 	event_id := rand.Intn(100000)
 	var jsonData Event
 	err := c.ShouldBindJSON(&jsonData)
-	checkError(err)
+	CheckError(err)
 	events = append(events, Event{
 		EventName:  jsonData.EventName,
 		EventOwner: jsonData.EventOwner,
@@ -56,7 +50,7 @@ func AddEvent(c *gin.Context) {
 func FetchEvent(c *gin.Context) {
 	var jsonData Event
 	err := c.ShouldBindJSON(&jsonData)
-	checkError(err)
+	CheckError(err)
 	for _, event := range events {
 		if event.EventID == jsonData.EventID {
 			c.JSON(http.StatusOK, gin.H{
@@ -73,19 +67,15 @@ func FetchEvent(c *gin.Context) {
 	})
 }
 
-func deleteElementFromEventSlice(slice []Event, index int) []Event {
-	return append(slice[:index], slice[index+1:]...)
-}
-
 func DeleteEvent(c *gin.Context) {
 	var jsonData Event
 	eventDeleted := false
 	err := c.ShouldBindJSON(&jsonData)
-	checkError(err)
+	CheckError(err)
 	for i, event := range events {
 		if event.EventID == jsonData.EventID {
 			fmt.Println(event.EventName, "available at index", i)
-			events = deleteElementFromEventSlice(events, i)
+			events = DeleteElementFromEventSlice(events, i)
 			c.JSON(200, gin.H{
 				"message": "Event deleted",
 			})
