@@ -78,6 +78,22 @@ func DeleteEvent(c *gin.Context) {
 	}
 }
 
+func UpdateEvent(c *gin.Context) {
+	var jsonData Event
+	err := c.ShouldBindJSON(&jsonData)
+	CheckError(err)
+	index, _ := CheckForEvent(jsonData)
+	if index < 0 {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "Event not found"})
+	} else {
+		events[index].EventName = jsonData.EventName
+		events[index].EventOwner = jsonData.EventOwner
+		c.JSON(http.StatusOK, gin.H{
+			"message": events[index].EventName + " updated"})
+	}
+}
+
 func GetRoot(c *gin.Context) {
 	returnData := map[string]string{"name": "Shubham"}
 	c.JSON(200, gin.H{
