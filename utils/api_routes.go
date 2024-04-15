@@ -26,7 +26,7 @@ var events = []Event{
 }
 
 func GetAllEvents(c *gin.Context) {
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"events_list": events,
 	})
 }
@@ -52,12 +52,12 @@ func FetchEvent(c *gin.Context) {
 	CheckError(err)
 	_, event := CheckForEvent(jsonData)
 	if event.EventID != 0 {
-		c.JSON(200, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"Event Name":  event.EventName,
 			"Event Owner": event.EventOwner,
 		})
 	} else {
-		c.JSON(404, gin.H{
+		c.JSON(http.StatusNotFound, gin.H{
 			"message": "Event not found"},
 		)
 	}
@@ -96,7 +96,7 @@ func UpdateEvent(c *gin.Context) {
 
 func GetRoot(c *gin.Context) {
 	returnData := map[string]string{"name": "Shubham"}
-	c.JSON(200, gin.H{
+	c.JSON(http.StatusOK, gin.H{
 		"name":   returnData["name"],
 		"events": listOfEvents[0]["event_name"],
 	})
