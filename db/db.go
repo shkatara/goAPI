@@ -29,7 +29,6 @@ func CreateEventTable() {
 		event_owner VARCHAR(255) NOT NULL
 	)
 	`
-
 	_, err := DB.Exec(eventTable)
 	if err != nil {
 		fmt.Println(err)

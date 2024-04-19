@@ -1,9 +1,10 @@
 package utils
 
 import (
-	"math/rand"
+	"fmt"
 	"net/http"
 
+	"example.com/api/db"
 	"github.com/gin-gonic/gin"
 )
 
@@ -26,21 +27,33 @@ var events = []Event{
 }
 
 func GetAllEvents(c *gin.Context) {
+	var events_data []Event
+	var event Event
+	result, err := db.DB.Query("SELECT event_title,event_owner FROM events")
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": "No events found",
+		})
+	}
+	defer result.Close()
+	for result.Next() {
+		dataScan := result.Scan(&event.EventName, &event.EventOwner)
+		fmt.Println(dataScan)
+	}
+
 	c.JSON(http.StatusOK, gin.H{
-		"events_list": events,
+		"events_list": events_data,
 	})
 }
 
 func AddEvent(c *gin.Context) {
-	event_id := rand.Intn(100000)
+	//event_id := rand.Intn(100000)
 	var jsonData Event
 	err := c.ShouldBindJSON(&jsonData)
+	sql_statement := "INSERT INTO events (event_title, event_owner) VALUES (?, ?)"
 	CheckError(err)
-	events = append(events, Event{
-		EventName:  jsonData.EventName,
-		EventOwner: jsonData.EventOwner,
-		EventID:    event_id,
-	})
+	_, err = db.DB.Exec(sql_statement, jsonData.EventName, jsonData.EventOwner)
+	CheckError(err)
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Event added",
 	})
