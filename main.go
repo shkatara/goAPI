@@ -13,9 +13,9 @@ func main() {
 	server.GET("/", utils.GetRoot)
 	server.GET("/event/all/", utils.GetAllEvents)
 	server.POST("/event/add/", utils.AddEvent)
-	server.GET("/event/fetch/", utils.FetchEvent)
-	server.POST("/event/delete/", utils.DeleteEvent)
-	server.POST("/event/update/", utils.UpdateEvent)
+	server.GET("/event/fetch/:id", utils.FetchEvent)
+	server.POST("/event/delete/:id", utils.DeleteEvent)
+	server.POST("/event/update/:id", utils.UpdateEvent)
 	server.Run(":8080")
 
 }

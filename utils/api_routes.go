@@ -1,7 +1,7 @@
 package utils
 
 import (
-	"fmt"
+	"database/sql"
 	"net/http"
 
 	"example.com/api/db"
@@ -29,7 +29,7 @@ var events = []Event{
 func GetAllEvents(c *gin.Context) {
 	var events_data []Event
 	var event Event
-	result, err := db.DB.Query("SELECT event_title,event_owner FROM events")
+	result, err := db.DB.Query("SELECT id,event_title,event_owner FROM events")
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "No events found",
@@ -37,8 +37,8 @@ func GetAllEvents(c *gin.Context) {
 	}
 	defer result.Close()
 	for result.Next() {
-		dataScan := result.Scan(&event.EventName, &event.EventOwner)
-		fmt.Println(dataScan)
+		result.Scan(&event.EventID, &event.EventName, &event.EventOwner)
+		events_data = append(events_data, event)
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -60,50 +60,65 @@ func AddEvent(c *gin.Context) {
 }
 
 func FetchEvent(c *gin.Context) {
+	post_id := c.Param("id")
 	var jsonData Event
+	var event Event
 	err := c.ShouldBindJSON(&jsonData)
 	CheckError(err)
-	_, event := CheckForEvent(jsonData)
-	if event.EventID != 0 {
+	row := db.DB.QueryRow("SELECT id,event_title,event_owner FROM events where id = ?", post_id)
+	err_scan := row.Scan(&event.EventID, &event.EventName, &event.EventOwner)
+	if sql.ErrNoRows != err_scan {
 		c.JSON(http.StatusOK, gin.H{
 			"Event Name":  event.EventName,
 			"Event Owner": event.EventOwner,
 		})
 	} else {
 		c.JSON(http.StatusNotFound, gin.H{
-			"message": "Event not found"},
-		)
+			"message": "Event not found",
+		})
 	}
 }
 
 func DeleteEvent(c *gin.Context) {
+	post_id := c.Param("id")
 	var jsonData Event
+	var event Event
 	err := c.ShouldBindJSON(&jsonData)
 	CheckError(err)
-	index, _ := CheckForEvent(jsonData)
-	if index < 0 {
+	row := db.DB.QueryRow("SELECT id,event_title,event_owner FROM events where id = ?", post_id)
+	err_scan := row.Scan(&event.EventID, &event.EventName, &event.EventOwner)
+	if sql.ErrNoRows == err_scan {
 		c.JSON(http.StatusNotFound, gin.H{
-			"message": "Event not found"})
+			"message": "Event not found",
+		})
 	} else {
-		events = DeleteElementFromEventSlice(events, index)
+		sql_statement := "DELETE FROM events where id = ?"
+		db.DB.Exec(sql_statement, post_id)
 		c.JSON(http.StatusOK, gin.H{
-			"message": "Event Deleted"})
+			"message": "Event Deleted",
+		})
 	}
+
 }
 
 func UpdateEvent(c *gin.Context) {
+	post_id := c.Param("id")
 	var jsonData Event
+	var event Event
 	err := c.ShouldBindJSON(&jsonData)
 	CheckError(err)
-	index, _ := CheckForEvent(jsonData)
-	if index < 0 {
+	row := db.DB.QueryRow("SELECT id,event_title,event_owner FROM events where id = ?", post_id)
+	err_scan := row.Scan(&event.EventID, &event.EventName, &event.EventOwner)
+	if sql.ErrNoRows == err_scan {
 		c.JSON(http.StatusNotFound, gin.H{
-			"message": "Event not found"})
+			"message": "Event not found",
+		})
 	} else {
-		events[index].EventName = jsonData.EventName
-		events[index].EventOwner = jsonData.EventOwner
+		sql_statement := "Update events SET event_title = ?, event_owner = ? where id = ?"
+		db.DB.Exec(sql_statement, jsonData.EventName, jsonData.EventOwner, post_id)
 		c.JSON(http.StatusOK, gin.H{
-			"message": events[index].EventName + " updated"})
+			"message": "Event Updated",
+		})
 	}
 }
 
