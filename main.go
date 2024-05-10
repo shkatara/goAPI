@@ -17,6 +17,7 @@ func main() {
 	server.POST("/event/delete/:id", utils.DeleteEvent)
 	server.POST("/event/update/:id", utils.UpdateEvent)
 	server.GET("/redirect", utils.Redirect)
+	server.NoRoute(utils.NoRouteHandler)
 	server.Run(":8080")
 
 }

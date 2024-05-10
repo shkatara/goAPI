@@ -30,6 +30,12 @@ func Redirect(c *gin.Context) {
 	c.Redirect(http.StatusMovedPermanently, "http://www.google.com/")
 }
 
+func NoRouteHandler(c *gin.Context) {
+	c.JSON(http.StatusNotFound, gin.H{
+		"message": "Route not found",
+	})
+}
+
 func GetAllEvents(c *gin.Context) {
 	var events_data []Event
 	var event Event
