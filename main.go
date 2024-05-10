@@ -16,6 +16,7 @@ func main() {
 	server.GET("/event/fetch/:id", utils.FetchEvent)
 	server.POST("/event/delete/:id", utils.DeleteEvent)
 	server.POST("/event/update/:id", utils.UpdateEvent)
+	server.GET("/redirect", utils.Redirect)
 	server.Run(":8080")
 
 }

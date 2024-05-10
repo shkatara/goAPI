@@ -26,6 +26,10 @@ var events = []Event{
 	{EventName: "There goes another", EventOwner: "Shubham", EventID: 2},
 }
 
+func Redirect(c *gin.Context) {
+	c.Redirect(http.StatusMovedPermanently, "http://www.google.com/")
+}
+
 func GetAllEvents(c *gin.Context) {
 	var events_data []Event
 	var event Event
