@@ -1,12 +1,23 @@
 package main
 
 import (
+	"net/http"
+
 	"example.com/api/db"
 	"example.com/api/utils"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 func main() {
+	prometheus.MustRegister(utils.GetAllEventsCounter)
+	prometheus.MustRegister(utils.AddEventCounter)
+	prometheus.MustRegister(utils.FetchEventCounter)
+	prometheus.MustRegister(utils.DeleteEventCounter)
+	prometheus.MustRegister(utils.UpdateEventCounter)
+	prometheus.MustRegister(utils.RedirectCounter)
+	prometheus.MustRegister(utils.NoRouteHandlerCounter)
 	db.InitDB()
 	db.CreateEventTable()
 	server := gin.Default()
@@ -18,6 +29,8 @@ func main() {
 	server.POST("/event/update/:id", utils.UpdateEvent)
 	server.GET("/redirect", utils.Redirect)
 	server.NoRoute(utils.NoRouteHandler)
+	http.Handle("/metrics", promhttp.Handler())
+	go http.ListenAndServe("127.0.0.1:8000", nil)
 	server.Run(":8080")
 
 }

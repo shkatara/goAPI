@@ -6,6 +6,7 @@ import (
 
 	"example.com/api/db"
 	"github.com/gin-gonic/gin"
+	"github.com/prometheus/client_golang/prometheus"
 )
 
 type Event struct {
@@ -21,22 +22,77 @@ var listOfEvents = []map[string]string{
 	},
 }
 
+var (
+	GetAllEventsCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "getallevent_requests_total",
+			Help: "Counter to expose GET method to GetAllEvents handler.",
+		},
+		[]string{"method"},
+	)
+	AddEventCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "addevent_requests_total",
+			Help: "Counter to expose POST method to AddEvent API.",
+		},
+		[]string{"method"},
+	)
+	FetchEventCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "fetchevent_requests_total",
+			Help: "Counter to expose POST method to FetchEvent API.",
+		},
+		[]string{"method"},
+	)
+	DeleteEventCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "deleteevent_requests_total",
+			Help: "Counter to expose POST method to DeleteEvent API.",
+		},
+		[]string{"method"},
+	)
+	UpdateEventCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "updateevent_requests_total",
+			Help: "Counter to expose POST method to UpdateEvent API.",
+		},
+		[]string{"method"},
+	)
+	RedirectCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "redirect_requests_total",
+			Help: "Counter to expose GET method to Redirect API.",
+		},
+		[]string{"method"},
+	)
+	NoRouteHandlerCounter = prometheus.NewCounterVec(
+		prometheus.CounterOpts{
+			Name: "noroutehandler_requests_total",
+			Help: "Counter to expose calls to NoRouteHandler API",
+		},
+		[]string{"method"},
+	)
+)
+
 var events = []Event{
 	{EventName: "A Go-lang life", EventOwner: "Shubham", EventID: 1},
 	{EventName: "There goes another", EventOwner: "Shubham", EventID: 2},
 }
 
 func Redirect(c *gin.Context) {
+	RedirectCounter.WithLabelValues("GET").Inc()
 	c.Redirect(http.StatusMovedPermanently, "http://www.google.com/")
 }
 
 func NoRouteHandler(c *gin.Context) {
+	NoRouteHandlerCounter.WithLabelValues("GET").Inc()
 	c.JSON(http.StatusNotFound, gin.H{
 		"message": "Route not found",
 	})
 }
 
 func GetAllEvents(c *gin.Context) {
+	GetAllEventsCounter.WithLabelValues("GET").Inc()
 	var events_data []Event
 	var event Event
 	result, err := db.DB.Query("SELECT id,event_title,event_owner FROM events")
@@ -57,6 +113,7 @@ func GetAllEvents(c *gin.Context) {
 }
 
 func AddEvent(c *gin.Context) {
+	AddEventCounter.WithLabelValues("POST").Inc()
 	//event_id := rand.Intn(100000)
 	var jsonData Event
 	err := c.ShouldBindJSON(&jsonData)
@@ -70,6 +127,7 @@ func AddEvent(c *gin.Context) {
 }
 
 func FetchEvent(c *gin.Context) {
+	FetchEventCounter.WithLabelValues("GET").Inc()
 	post_id := c.Param("id")
 	var jsonData Event
 	var event Event
@@ -90,6 +148,7 @@ func FetchEvent(c *gin.Context) {
 }
 
 func DeleteEvent(c *gin.Context) {
+	DeleteEventCounter.WithLabelValues("POST").Inc()
 	post_id := c.Param("id")
 	var jsonData Event
 	var event Event
@@ -112,6 +171,7 @@ func DeleteEvent(c *gin.Context) {
 }
 
 func UpdateEvent(c *gin.Context) {
+	UpdateEventCounter.WithLabelValues("POST").Inc()
 	post_id := c.Param("id")
 	var jsonData Event
 	var event Event
