@@ -11,13 +11,7 @@ import (
 )
 
 func main() {
-	prometheus.MustRegister(utils.GetAllEventsCounter)
-	prometheus.MustRegister(utils.AddEventCounter)
-	prometheus.MustRegister(utils.FetchEventCounter)
-	prometheus.MustRegister(utils.DeleteEventCounter)
-	prometheus.MustRegister(utils.UpdateEventCounter)
-	prometheus.MustRegister(utils.RedirectCounter)
-	prometheus.MustRegister(utils.NoRouteHandlerCounter)
+	prometheus.MustRegister(utils.RequestsCounter)
 	db.InitDB()
 	db.CreateEventTable()
 	server := gin.Default()
