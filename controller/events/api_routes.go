@@ -2,10 +2,12 @@ package events
 
 import (
 	"database/sql"
+	"fmt"
 	"net/http"
 
 	"example.com/api/db"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/prometheus/client_golang/prometheus"
 )
 
@@ -21,6 +23,7 @@ var listOfEvents = []map[string]string{
 		"event_owner": "Shubham",
 	},
 }
+var hmacSampleSecret = []byte("dummytestSecret")
 
 var (
 	RequestsCounter = prometheus.NewCounterVec(
@@ -53,21 +56,39 @@ func GetAllEvents(c *gin.Context) {
 	RequestsCounter.WithLabelValues("GET", "all").Inc()
 	var events_data []Event
 	var event Event
-	result, err := db.DB.Query("SELECT id,event_title,event_owner FROM events")
-	if err != nil {
+	AuthorizationToken := c.GetHeader("Authorization")
+
+	token, err := jwt.Parse(AuthorizationToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return hmacSampleSecret, nil
+	})
+	if err == nil {
+		claims, ok := token.Claims.(jwt.MapClaims)
+		fmt.Println(claims["username"], ok)
+
+		result, err := db.DB.Query("SELECT id,event_title,event_owner FROM events")
+		if err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"message": "No events found",
+			})
+		}
+		defer result.Close()
+		for result.Next() {
+			result.Scan(&event.EventID, &event.EventName, &event.EventOwner)
+			events_data = append(events_data, event)
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"events_list": events_data,
+		})
+	} else {
 		c.JSON(http.StatusNotFound, gin.H{
-			"message": "No events found",
+			"message": "Authorization Failed",
 		})
 	}
-	defer result.Close()
-	for result.Next() {
-		result.Scan(&event.EventID, &event.EventName, &event.EventOwner)
-		events_data = append(events_data, event)
-	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"events_list": events_data,
-	})
 }
 
 func AddEvent(c *gin.Context) {

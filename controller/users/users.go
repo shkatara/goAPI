@@ -44,7 +44,7 @@ func Signup(c *gin.Context) {
 func Login(c *gin.Context) {
 	var jsonData Users
 	var user Users
-	token_expire_time := time.Now().Unix() + 120 //120 is 2 minutes so token is valid for 2 mins
+	token_expire_time := time.Now().Unix() + 7200 //120 is 2 minutes so token is valid for 2 mins
 	c.ShouldBindJSON(&jsonData)
 	encoded_pass := b64.StdEncoding.EncodeToString([]byte(jsonData.Password))
 	row := db.DB.QueryRow("SELECT username, password FROM users where username = ? and password = ?", jsonData.Username, encoded_pass)
