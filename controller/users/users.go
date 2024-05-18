@@ -4,9 +4,11 @@ import (
 	"database/sql"
 	b64 "encoding/base64"
 	"net/http"
+	"time"
 
 	"example.com/api/db"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
 )
 
 type Users struct {
@@ -20,6 +22,8 @@ func UsersHello(c *gin.Context) {
 		"msg": "HelloFromUsers",
 	})
 }
+
+var hmacSampleSecret = []byte("dummytestSecret")
 
 func Signup(c *gin.Context) {
 	var jsonData Users
@@ -40,17 +44,26 @@ func Signup(c *gin.Context) {
 func Login(c *gin.Context) {
 	var jsonData Users
 	var user Users
+	token_expire_time := time.Now().Unix() + 120 //120 is 2 minutes so token is valid for 2 mins
 	c.ShouldBindJSON(&jsonData)
 	encoded_pass := b64.StdEncoding.EncodeToString([]byte(jsonData.Password))
 	row := db.DB.QueryRow("SELECT username, password FROM users where username = ? and password = ?", jsonData.Username, encoded_pass)
 	err_scan := row.Scan(&user.Username, &user.Password)
 	if sql.ErrNoRows != err_scan {
-		c.JSON(http.StatusOK, gin.H{
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 			"username": &user.Username,
+			"exp":      token_expire_time,
+			"iat":      time.Now().Unix(),
+		})
+		// Sign and get the complete encoded token as a string using the secret
+		tokenString, _ := token.SignedString(hmacSampleSecret)
+		c.JSON(http.StatusOK, gin.H{
+			"token": tokenString,
 		})
 	} else {
 		c.JSON(http.StatusNotFound, gin.H{
 			"message": "User not found",
 		})
 	}
+
 }
