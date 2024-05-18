@@ -29,7 +29,15 @@ func CreateEventTable() {
 		event_owner VARCHAR(255) NOT NULL
 	)
 	`
+	usersTable := `
+	CREATE TABLE IF NOT EXISTS users (
+		user_id INTEGER PRIMARY KEY AUTOINCREMENT,
+		username VARCHAR(255) NOT NULL,
+		password VARCHAR(255) NOT NULL
+	)
+	`
 	_, err := DB.Exec(eventTable)
+
 	if err != nil {
 		fmt.Println(err)
 		panic("Could not create events table")
@@ -37,4 +45,11 @@ func CreateEventTable() {
 		fmt.Println("Created events table successfully")
 	}
 
+	_, err = DB.Exec(usersTable)
+	if err != nil {
+		fmt.Println(err)
+		panic("Could not create users table")
+	} else {
+		fmt.Println("Created users table successfully")
+	}
 }
