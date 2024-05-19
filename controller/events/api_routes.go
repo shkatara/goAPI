@@ -176,17 +176,27 @@ func UpdateEvent(c *gin.Context) {
 	var event Event
 	err := c.ShouldBindJSON(&jsonData)
 	CheckError(err)
-	row := db.DB.QueryRow("SELECT id,event_title,event_owner FROM events where id = ?", post_id)
-	err_scan := row.Scan(&event.EventID, &event.EventTitle, &event.EventOwnerID)
-	if sql.ErrNoRows == err_scan {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "Event not found",
-		})
+	AuthorizationToken := c.GetHeader("Authorization")
+	token, isvalid := IsValid(AuthorizationToken)
+	if isvalid {
+		claims, _ := token.Claims.(jwt.MapClaims)
+		fetch_sql_statement := fmt.Sprintf("SELECT events.event_title, events.event_content FROM events where event_owner_name = '%s' and event_id = %s", claims["username"], post_id)
+		row := db.DB.QueryRow(fetch_sql_statement)
+		err_scan := row.Scan(&event.EventTitle, &event.EventContent)
+		if sql.ErrNoRows == err_scan {
+			c.JSON(http.StatusNotFound, gin.H{
+				"message": "Event not found",
+			})
+		} else {
+			update_sql_statement := fmt.Sprintf("UPDATE events SET event_title = '%s', event_content = '%s' where event_owner_name = '%s' and event_id = %s", jsonData.EventTitle, jsonData.EventContent, claims["username"], post_id)
+			db.DB.Exec(update_sql_statement)
+			c.JSON(http.StatusOK, gin.H{
+				"message": "Event Updated",
+			})
+		}
 	} else {
-		sql_statement := "Update events SET event_title = ?, event_owner = ? where id = ?"
-		db.DB.Exec(sql_statement, jsonData.EventTitle, jsonData.EventOwnerID, post_id)
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Event Updated",
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Authorization Failed",
 		})
 	}
 }
