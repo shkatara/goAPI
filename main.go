@@ -33,5 +33,4 @@ func main() {
 	db.InitDB()
 	db.CreateEventTable()
 	initialize_api()
-
 }

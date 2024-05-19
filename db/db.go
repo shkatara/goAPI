@@ -24,9 +24,10 @@ func InitDB() {
 func CreateEventTable() {
 	eventTable := `
 	CREATE TABLE IF NOT EXISTS events (
-		id INTEGER PRIMARY KEY AUTOINCREMENT,
+		event_id INTEGER PRIMARY KEY AUTOINCREMENT,
 		event_title VARCHAR(255) NOT NULL,
-		event_owner VARCHAR(255) NOT NULL
+		event_content VARCHAR(255) NOT NULL,
+		event_owner_name VARCHAR(255) NOT NULL
 	)
 	`
 	usersTable := `

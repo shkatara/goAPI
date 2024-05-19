@@ -32,7 +32,7 @@ func Signup(c *gin.Context) {
 	sql_statement := "INSERT INTO users (username, password) VALUES (?, ?)"
 	_, err := db.DB.Exec(sql_statement, jsonData.Username, encoded_pass)
 	if err != nil {
-		c.JSON(http.StatusNotFound, gin.H{
+		c.JSON(http.StatusBadRequest, gin.H{
 			"message": "Could not sign up user",
 		})
 	}
@@ -61,8 +61,8 @@ func Login(c *gin.Context) {
 			"token": tokenString,
 		})
 	} else {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "User not found",
+		c.JSON(http.StatusBadRequest, gin.H{
+			"message": "Login Failed",
 		})
 	}
 
