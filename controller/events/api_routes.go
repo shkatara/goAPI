@@ -59,24 +59,16 @@ func GetAllEvents(c *gin.Context) {
 	var events_data []Event
 	var event Event
 	AuthorizationToken := c.GetHeader("Authorization")
-
-	token, err := jwt.Parse(AuthorizationToken, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return hmacSampleSecret, nil
-	})
-	if err == nil {
+	token, isvalid := IsValid(AuthorizationToken)
+	if isvalid {
 		claims, _ := token.Claims.(jwt.MapClaims)
 		sql_statement := fmt.Sprintf("SELECT events.event_title, events.event_content FROM events where event_owner_name = '%s'", claims["username"])
-		fmt.Println(sql_statement)
 		result, _ := db.DB.Query(sql_statement)
 		defer result.Close()
 		for result.Next() {
 			result.Scan(&event.EventTitle, &event.EventContent)
 			events_data = append(events_data, event)
 		}
-		fmt.Println(events_data)
 		if len(events_data) == 0 {
 			c.JSON(http.StatusNotFound, gin.H{
 				"events_list": "No Events Found",
@@ -95,21 +87,14 @@ func GetAllEvents(c *gin.Context) {
 
 func AddEvent(c *gin.Context) {
 	RequestsCounter.WithLabelValues("POST", "add").Inc()
-	//event_id := rand.Intn(100000)
 	var jsonData Event
 	c.ShouldBindJSON(&jsonData)
 	AuthorizationToken := c.GetHeader("Authorization")
-
-	token, err := jwt.Parse(AuthorizationToken, func(token *jwt.Token) (interface{}, error) {
-		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-		}
-		return hmacSampleSecret, nil
-	})
-	if err == nil {
+	token, isvalid := IsValid(AuthorizationToken)
+	if isvalid {
 		claims, _ := token.Claims.(jwt.MapClaims)
 		sql_statement := "INSERT INTO events (event_title, event_content, event_owner_name ) VALUES (?, ?, ?)"
-		_, err = db.DB.Exec(sql_statement, jsonData.EventTitle, jsonData.EventContent, claims["username"])
+		_, err := db.DB.Exec(sql_statement, jsonData.EventTitle, jsonData.EventContent, claims["username"])
 		CheckError(err)
 		c.JSON(http.StatusOK, gin.H{
 			"message": "Event added",
@@ -128,16 +113,26 @@ func FetchEvent(c *gin.Context) {
 	var event Event
 	err := c.ShouldBindJSON(&jsonData)
 	CheckError(err)
-	row := db.DB.QueryRow("SELECT id,event_title,event_owner FROM events where id = ?", post_id)
-	err_scan := row.Scan(&event.EventID, &event.EventTitle, &event.EventOwnerID)
-	if sql.ErrNoRows != err_scan {
-		c.JSON(http.StatusOK, gin.H{
-			"Event Name":  event.EventTitle,
-			"Event Owner": event.EventOwnerID,
-		})
+	AuthorizationToken := c.GetHeader("Authorization")
+	token, isvalid := IsValid(AuthorizationToken)
+	if isvalid {
+		claims, _ := token.Claims.(jwt.MapClaims)
+		sql_statement := fmt.Sprintf("SELECT events.event_title, events.event_content FROM events where event_owner_name = '%s' and event_id = %s", claims["username"], post_id)
+		row := db.DB.QueryRow(sql_statement)
+		err_scan := row.Scan(&event.EventTitle, &event.EventContent)
+		if sql.ErrNoRows != err_scan {
+			c.JSON(http.StatusOK, gin.H{
+				"Event Title":   event.EventTitle,
+				"Event Content": event.EventContent,
+			})
+		} else {
+			c.JSON(http.StatusNotFound, gin.H{
+				"message": "Event not found",
+			})
+		}
 	} else {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "Event not found",
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Authorization Failed",
 		})
 	}
 }
@@ -149,20 +144,29 @@ func DeleteEvent(c *gin.Context) {
 	var event Event
 	err := c.ShouldBindJSON(&jsonData)
 	CheckError(err)
-	row := db.DB.QueryRow("SELECT id,event_title,event_owner FROM events where id = ?", post_id)
-	err_scan := row.Scan(&event.EventID, &event.EventTitle, &event.EventOwnerID)
-	if sql.ErrNoRows == err_scan {
-		c.JSON(http.StatusNotFound, gin.H{
-			"message": "Event not found",
-		})
+	AuthorizationToken := c.GetHeader("Authorization")
+	token, isvalid := IsValid(AuthorizationToken)
+	if isvalid {
+		claims, _ := token.Claims.(jwt.MapClaims)
+		delete_sql_statement := fmt.Sprintf("DELETE FROM events where event_owner_name = '%s' and event_id = %s", claims["username"], post_id)
+		fetch_sql_statement := fmt.Sprintf("SELECT events.event_title, events.event_content FROM events where event_owner_name = '%s' and event_id = %s", claims["username"], post_id)
+		row := db.DB.QueryRow(fetch_sql_statement)
+		err_scan := row.Scan(&event.EventTitle, &event.EventContent)
+		if sql.ErrNoRows == err_scan {
+			c.JSON(http.StatusNotFound, gin.H{
+				"message": "Event not found",
+			})
+		} else {
+			db.DB.Exec(delete_sql_statement)
+			c.JSON(http.StatusOK, gin.H{
+				"message": "Event Deleted",
+			})
+		}
 	} else {
-		sql_statement := "DELETE FROM events where id = ?"
-		db.DB.Exec(sql_statement, post_id)
-		c.JSON(http.StatusOK, gin.H{
-			"message": "Event Deleted",
+		c.JSON(http.StatusUnauthorized, gin.H{
+			"message": "Authorization Failed",
 		})
 	}
-
 }
 
 func UpdateEvent(c *gin.Context) {

@@ -2,6 +2,8 @@ package events
 
 import (
 	"fmt"
+
+	"github.com/golang-jwt/jwt/v5"
 )
 
 func CheckError(e error) {
@@ -21,4 +23,18 @@ func CheckForEvent(e Event) (int, Event) {
 		}
 	}
 	return -1, Event{}
+}
+
+func IsValid(AuthorizationToken string) (*jwt.Token, bool) {
+	token, err := jwt.Parse(AuthorizationToken, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+		}
+		return hmacSampleSecret, nil
+	})
+	if err == nil {
+		return token, true
+	} else {
+		return nil, false
+	}
 }
